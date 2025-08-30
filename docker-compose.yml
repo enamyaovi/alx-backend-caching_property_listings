@@ -1,26 +1,13 @@
-version: "3.9"
+version: '3.9'
 
 services:
-  web:
-    build: .
-    container_name: django_app
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/alx_backend_caching_property_listings
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-      - redis
-    env_file:
-      - .env
-
   db:
     image: postgres:latest
-    container_name: postgres_db
-    restart: always
-    env_file:
-      - .env
+    container_name: property_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -28,12 +15,32 @@ services:
 
   redis:
     image: redis:latest
-    container_name: redis_cache
-    restart: always
+    container_name: property_redis
     ports:
       - "6379:6379"
-    env_file:
-      - .env
+    volumes:
+      - redis_data:/data
+
+  web:
+    build: .
+    container_name: property_web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/alx_backend_caching_property_listings
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - db
+      - redis
 
 volumes:
   postgres_data:
+  redis_data:
